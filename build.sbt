@@ -3,7 +3,7 @@ import ScalaModulePlugin._
 
 crossScalaVersions in ThisBuild := List("2.12.6", "2.11.12", "2.13.0-M4")
 
-lazy val bintraySettings: Seq[Def.Setting[_]] = Seq(
+lazy val bintraySettings = Seq(
   publishMavenStyle := true,
   bintrayOrganization := Some("outworkers"),
   bintrayRepository <<= scalaVersion.apply {
@@ -11,8 +11,8 @@ lazy val bintraySettings: Seq[Def.Setting[_]] = Seq(
   },
   bintrayReleaseOnPublish in ThisBuild := true,
   publishArtifact in Test := false,
-  pomIncludeRepository := { _ => true},
-  licenses += ("Apache-2.0", url("https://github.com/outworkers/outworkers/blob/develop/LICENSE.txt"))
+  pomIncludeRepository := { _ => true },
+  licenses := Seq("Apache-2.0" -> url("https://github.com/outworkers/outworkers/blob/develop/LICENSE.txt"))
 )
 
 lazy val xml = crossProject(JSPlatform, JVMPlatform)
@@ -68,10 +68,10 @@ lazy val xml = crossProject(JSPlatform, JVMPlatform)
         )
       }
     }
-  )
-  .jvmSettings(
+  ).settings(
+    BintrayPlugin.bintrayPublishSettings ++ bintraySettings
+  ).jvmSettings(
     OsgiKeys.exportPackage := Seq(s"scala.xml.*;version=${version.value}"),
-
     libraryDependencies ++= Seq(
       "junit" % "junit" % "4.12" % Test,
       "com.novocode" % "junit-interface" % "0.11" % Test,
@@ -81,11 +81,14 @@ lazy val xml = crossProject(JSPlatform, JVMPlatform)
         s"scala-xml_${scalaBinaryVersion.value}"
       )
     )
-  )
-  .jsSettings(
+  ).settings(
+    BintrayPlugin.bintrayPublishSettings ++ bintraySettings
+  ).jvmSettings(
+    BintrayPlugin.bintrayPublishSettings ++ bintraySettings
+  ).jsSettings(
     // Scala.js cannot run forked tests
     fork in Test := false
-  )
+  ).jsSettings(BintrayPlugin.bintrayPublishSettings ++ bintraySettings)
   .jsConfigure(_.enablePlugins(ScalaJSJUnitPlugin))
 
 lazy val xmlJVM = xml.jvm
