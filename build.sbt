@@ -2,6 +2,7 @@ import sbtcrossproject.{ crossProject, CrossType }
 import ScalaModulePlugin._
 
 crossScalaVersions in ThisBuild := List("2.12.6", "2.11.12", "2.13.0-M4")
+scalaVersion := "2.11.12"
 
 lazy val bintraySettings = Seq(
   publishMavenStyle := true,
@@ -22,9 +23,10 @@ lazy val xml = crossProject(JSPlatform, JVMPlatform)
   .settings(scalaModuleSettings)
   .jvmSettings(scalaModuleSettingsJVM)
   .settings(
+    organization := "com.outworkers",
     name    := "scala-xml",
-    version := "1.2.0-SNAPSHOT",
-
+    version := "1.3.1",
+    scalaVersion := "2.11.12",
     // Compiler team advised avoiding the -Xfuture option for releases.
     // The output with -Xfuture should be periodically checked, though.
     scalacOptions         ++= Seq(
@@ -81,8 +83,6 @@ lazy val xml = crossProject(JSPlatform, JVMPlatform)
         s"scala-xml_${scalaBinaryVersion.value}"
       )
     )
-  ).settings(
-    BintrayPlugin.bintrayPublishSettings ++ bintraySettings
   ).jvmSettings(
     BintrayPlugin.bintrayPublishSettings ++ bintraySettings
   ).jsSettings(
