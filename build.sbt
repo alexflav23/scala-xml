@@ -1,7 +1,19 @@
-import sbtcrossproject.{crossProject, CrossType}
+import sbtcrossproject.{ crossProject, CrossType }
 import ScalaModulePlugin._
 
 crossScalaVersions in ThisBuild := List("2.12.6", "2.11.12", "2.13.0-M4")
+
+lazy val bintraySettings: Seq[Def.Setting[_]] = Seq(
+  publishMavenStyle := true,
+  bintrayOrganization := Some("outworkers"),
+  bintrayRepository <<= scalaVersion.apply {
+    v => if (v.trim.endsWith("SNAPSHOT")) "oss-snapshots" else "oss-releases"
+  },
+  bintrayReleaseOnPublish in ThisBuild := true,
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ => true},
+  licenses += ("Apache-2.0", url("https://github.com/outworkers/outworkers/blob/develop/LICENSE.txt"))
+)
 
 lazy val xml = crossProject(JSPlatform, JVMPlatform)
   .withoutSuffixFor(JVMPlatform)
@@ -15,7 +27,11 @@ lazy val xml = crossProject(JSPlatform, JVMPlatform)
 
     // Compiler team advised avoiding the -Xfuture option for releases.
     // The output with -Xfuture should be periodically checked, though.
-    scalacOptions         ++= "-deprecation:false -feature -Xlint:-stars-align,-nullary-unit,_".split("\\s+").to[Seq],
+    scalacOptions         ++= Seq(
+      "-deprecation:false",
+      "-feature",
+      "-Xlint:-stars-align,-nullary-unit"
+    ),
     scalacOptions in Test  += "-Xxml:coalescing",
 
     mimaPreviousVersion := {
@@ -38,20 +54,17 @@ lazy val xml = crossProject(JSPlatform, JVMPlatform)
         -> url(s"http://www.scala-lang.org/api/${scalaVersion.value}/")
     ) ++ {
       // http://stackoverflow.com/questions/16934488
-      Option(System.getProperty("sun.boot.class.path")).flatMap { classPath =>
-        classPath.split(java.io.File.pathSeparator).filter(_.endsWith(java.io.File.separator + "rt.jar")).headOption
+      sys.props.get("sun.boot.class.path").flatMap { classPath =>
+        classPath.split(java.io.File.pathSeparator).find(_.endsWith(java.io.File.separator + "rt.jar"))
       }.map { jarPath =>
         Map(
-          file(jarPath)
-            -> url("http://docs.oracle.com/javase/8/docs/api")
+          file(jarPath) -> url("http://docs.oracle.com/javase/8/docs/api")
         )
       } getOrElse {
         // If everything fails, jam in the Java 9 base module.
         Map(
-          file("/modules/java.base")
-            -> url("http://docs.oracle.com/javase/9/docs/api"),
-          file("/modules/java.xml")
-            -> url("http://docs.oracle.com/javase/9/docs/api")
+          file("/modules/java.base") -> url("http://docs.oracle.com/javase/9/docs/api"),
+          file("/modules/java.xml") -> url("http://docs.oracle.com/javase/9/docs/api")
         )
       }
     }
@@ -59,10 +72,15 @@ lazy val xml = crossProject(JSPlatform, JVMPlatform)
   .jvmSettings(
     OsgiKeys.exportPackage := Seq(s"scala.xml.*;version=${version.value}"),
 
-    libraryDependencies += "junit" % "junit" % "4.12" % "test",
-    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
-    libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.5" % "test",
-    libraryDependencies += ("org.scala-lang" % "scala-compiler" % scalaVersion.value % "test").exclude("org.scala-lang.modules", s"scala-xml_${scalaBinaryVersion.value}")
+    libraryDependencies ++= Seq(
+      "junit" % "junit" % "4.12" % Test,
+      "com.novocode" % "junit-interface" % "0.11" % Test,
+      "org.apache.commons" % "commons-lang3" % "3.5" % Test,
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value % Test exclude(
+        "org.scala-lang.modules",
+        s"scala-xml_${scalaBinaryVersion.value}"
+      )
+    )
   )
   .jsSettings(
     // Scala.js cannot run forked tests

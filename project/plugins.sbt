@@ -11,3 +11,4 @@ val scalaJSVersion =
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJSVersion)
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.5.0")
 addSbtPlugin("org.scala-lang.modules" % "sbt-scala-module" % "1.0.14")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
